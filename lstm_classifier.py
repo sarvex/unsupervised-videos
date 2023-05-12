@@ -10,10 +10,10 @@ class LSTMClassifier(object):
       self.lstm_stack_.Add(lstm.LSTM(l))
     self.squash_relu_ = model.squash_relu
     self.squash_relu_lambda_ = model.squash_relu_lambda
-    
+
     if len(model.timestamp) > 0:
       old_st = model.timestamp[-1]
-      ckpt = os.path.join(model.checkpoint_dir, '%s_%s.h5' % (model.name, old_st))
+      ckpt = os.path.join(model.checkpoint_dir, f'{model.name}_{old_st}.h5')
       f = h5py.File(ckpt)
       self.lstm_stack_.Load(f)
       f.close()
@@ -122,7 +122,7 @@ class LSTMClassifier(object):
     loss = 0
     preds = np.zeros((dataset_size, self.num_output_dims_), dtype=np.float32)
     start = 0
-    for ii in xrange(num_batches):
+    for _ in xrange(num_batches):
       v_cpu, t_cpu = data.GetBatch()
       self.v_.overwrite(v_cpu)
       self.target_.overwrite(t_cpu)
@@ -146,7 +146,7 @@ class LSTMClassifier(object):
     self.c_ = cm.empty((batch_size, 1))
 
   def Save(self, model_file):
-    sys.stdout.write(' Writing model to %s' % model_file)
+    sys.stdout.write(f' Writing model to {model_file}')
     f = h5py.File(model_file, 'w')
     self.lstm_stack_.Save(f)
     f.close()

@@ -25,7 +25,7 @@ _dev_prefix = '/dev/nvidia'
 def board_ids():
     """Returns integer board ids available on this machine."""
     from glob import glob
-    board_devs = glob(_dev_prefix + '[0-9]*')
+    board_devs = glob(f'{_dev_prefix}[0-9]*')
     return range(len(board_devs))
     #p = Popen(['/u/tang/bin/get_num_gpu_boards'], stdout=PIPE)    
     #nBoards = int(p.stdout.read())
@@ -97,10 +97,7 @@ def obtain_lock_id_to_hog():
 
     * Lock must be freed manually *
     """
-    for id in board_ids():
-        if _obtain_lock(id):
-            return id
-    return -1
+    return next((id for id in board_ids() if _obtain_lock(id)), -1)
 
 def free_lock(id):
     """Attempts to free lock id, returning success as True/False."""
@@ -108,45 +105,42 @@ def free_lock(id):
         filename = _lock_file(id)
         # On POSIX systems os.rename is an atomic operation, so this is the safe
         # way to delete a lock:
-        os.rename(filename, filename + '.redundant')
-        os.remove(filename + '.redundant')
+        os.rename(filename, f'{filename}.redundant')
+        os.remove(f'{filename}.redundant')
         return True
     except:
         return False
 
 def nvidia_gpu_stats():    
-    p = Popen(['nvidia-smi', '-x', '-a'], stdout=PIPE)    
+    p = Popen(['nvidia-smi', '-x', '-a'], stdout=PIPE)
     output = p.stdout.read().lstrip()
     try:
         doc = parseString(output)
-        gpucounter = 0        
         templist = []
         memlist = []
-        uselist = []        
+        uselist = []
         fanlist = []
         doc2 = doc.getElementsByTagName("nvidia_smi_log")[0]
         gpulist = doc2.getElementsByTagName("gpu")
-        for gpu in gpulist:        
-            temp = gpu.getElementsByTagName('temperature')[0]            
+        for gpu in gpulist:
+            temp = gpu.getElementsByTagName('temperature')[0]
             temp2 = temp.getElementsByTagName('gpu_temp')[0]
-            templist.append(str(temp2.firstChild.toxml()))            
-            mem = gpu.getElementsByTagName('memory_usage')[0]               
+            templist.append(str(temp2.firstChild.toxml()))
+            mem = gpu.getElementsByTagName('memory_usage')[0]
             memtot = mem.getElementsByTagName('total')[0]
             memused = mem.getElementsByTagName('used')[0]
-            memfree = mem.getElementsByTagName('free')[0]            
+            memfree = mem.getElementsByTagName('free')[0]
             memtot_str = str(memtot.firstChild.toxml())
             memused_str = str(memused.firstChild.toxml())
             memfree_str = str(memfree.firstChild.toxml())
-            memtot_float = float(memtot_str[:-3])            
+            memtot_float = float(memtot_str[:-3])
             memused_float = float(memused_str[:-3])
             memfree_float = float(memfree_str[:-3])
             memlist.append('%03.f' % memused_float + '+%03.f' % memfree_float + '=%03.f' % memtot_float + 'Mb')
-            use = gpu.getElementsByTagName('gpu_util')[0]        
+            use = gpu.getElementsByTagName('gpu_util')[0]
             uselist.append(str(use.firstChild.toxml()))
             fan = gpu.getElementsByTagName('fan_speed')[0]
             fanlist.append(str(fan.firstChild.toxml()))
-            gpucounter += 1
-                    
         return [uselist, memlist, fanlist, templist]
     except:        
         return [ [-9999] * len(board_ids()) ] *4

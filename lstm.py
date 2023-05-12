@@ -53,19 +53,35 @@ class LSTM(object):
     assert seq_length > 0
     self.batch_size_  = batch_size
     self.seq_length_  = seq_length
-    self.state_ = [cm.empty((batch_size, 6 * self.num_lstms_)) for i in xrange(seq_length)]
-    self.deriv_ = [cm.empty((batch_size, 6 * self.num_lstms_)) for i in xrange(seq_length)]
+    self.state_ = [
+        cm.empty((batch_size, 6 * self.num_lstms_)) for _ in xrange(seq_length)
+    ]
+    self.deriv_ = [
+        cm.empty((batch_size, 6 * self.num_lstms_)) for _ in xrange(seq_length)
+    ]
 
     # dropout mask
     if self.has_output_ and self.output_dropprob_ > 0:
-      self.output_drop_mask_ = [cm.empty((batch_size, self.num_lstms_)) for i in xrange(seq_length)]
-      self.output_intermediate_state_ = [cm.empty((batch_size, self.num_lstms_)) for i in xrange(seq_length)]
-      self.output_intermediate_deriv_ = [cm.empty((batch_size, self.num_lstms_)) for i in xrange(seq_length)]
+      self.output_drop_mask_ = [
+          cm.empty((batch_size, self.num_lstms_)) for _ in xrange(seq_length)
+      ]
+      self.output_intermediate_state_ = [
+          cm.empty((batch_size, self.num_lstms_)) for _ in xrange(seq_length)
+      ]
+      self.output_intermediate_deriv_ = [
+          cm.empty((batch_size, self.num_lstms_)) for _ in xrange(seq_length)
+      ]
 
     if self.has_input_ and self.input_dropprob_ > 0:
-      self.input_drop_mask_ = [cm.empty((batch_size, self.input_dims_)) for i in xrange(seq_length)]
-      self.input_intermediate_state_ = [cm.empty((batch_size, self.input_dims_)) for i in xrange(seq_length)]
-      self.input_intermediate_deriv_ = [cm.empty((batch_size, self.input_dims_)) for i in xrange(seq_length)]
+      self.input_drop_mask_ = [
+          cm.empty((batch_size, self.input_dims_)) for _ in xrange(seq_length)
+      ]
+      self.input_intermediate_state_ = [
+          cm.empty((batch_size, self.input_dims_)) for _ in xrange(seq_length)
+      ]
+      self.input_intermediate_deriv_ = [
+          cm.empty((batch_size, self.input_dims_)) for _ in xrange(seq_length)
+      ]
 
   def Load(self, f):
     for name, p in self.param_list_:
@@ -316,7 +332,7 @@ class LSTMStack(object):
   def Fprop(self, input_frame=None, init_state=[], output_frame=None, train=False, copy_init_state=True):
     num_models = self.num_models_
     num_init_state = len(init_state)
-    assert num_init_state == 0 or num_init_state == num_models
+    assert num_init_state in [0, num_models]
     for m, model in enumerate(self.models_):
       this_input_frame  = input_frame if m == 0 else self.models_[m-1].GetCurrentHiddenState()
       this_init_state   = init_state[m] if num_init_state > 0 else None
@@ -330,7 +346,7 @@ class LSTMStack(object):
                    init_state=[], init_deriv=[], output_deriv=None, copy_init_state=True):
     num_models = self.num_models_
     num_init_state = len(init_state)
-    assert num_init_state == 0 or num_init_state == num_models
+    assert num_init_state in [0, num_models]
     for m in xrange(num_models-1, -1, -1):
       model = self.models_[m]
       this_input_frame  = input_frame if m == 0 else self.models_[m-1].GetCurrentHiddenState()
@@ -375,10 +391,7 @@ class LSTMStack(object):
       return None
 
   def GetCurrentCellState(self):
-    if self.num_models_ > 0:
-      return self.models_[-1].GetCurrentCellState()
-    else:
-      return None
+    return self.models_[-1].GetCurrentCellState() if self.num_models_ > 0 else None
 
   def GetCurrentHiddenDeriv(self):
     if self.num_models_ > 0:
@@ -387,10 +400,7 @@ class LSTMStack(object):
       return None
 
   def GetCurrentCellDeriv(self):
-    if self.num_models_ > 0:
-      return self.models_[-1].GetCurrentCellDeriv()
-    else:
-      return None
+    return self.models_[-1].GetCurrentCellDeriv() if self.num_models_ > 0 else None
 
   def Display(self):
     for m, model in enumerate(self.models_):
@@ -403,28 +413,16 @@ class LSTMStack(object):
     return params_list
 
   def HasInputs(self):
-    if self.num_models_ > 0:
-      return self.models_[0].HasInputs()
-    else:
-      return False
+    return self.models_[0].HasInputs() if self.num_models_ > 0 else False
   
   def HasOutputs(self):
-    if self.num_models_ > 0:
-      return self.models_[-1].HasOutputs()
-    else:
-      return False
+    return self.models_[-1].HasOutputs() if self.num_models_ > 0 else False
 
   def GetInputDims(self):
-    if self.num_models_ > 0:
-      return self.models_[0].GetInputDims()
-    else:
-      return 0
+    return self.models_[0].GetInputDims() if self.num_models_ > 0 else 0
   
   def GetOutputDims(self):
-    if self.num_models_ > 0:
-      return self.models_[-1].GetOutputDims()
-    else:
-      return 0
+    return self.models_[-1].GetOutputDims() if self.num_models_ > 0 else 0
 
   def GetAllCurrentStates(self):
     return [m.GetCurrentState() for m in self.models_]

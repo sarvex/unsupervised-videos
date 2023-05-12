@@ -8,10 +8,7 @@ class LogReg(object):
     self.num_outputs_ = logreg_config.num_outputs
     self.w_ = Param((self.num_outputs_, self.num_dims_), logreg_config.w)
     self.b_ = Param((1, self.num_outputs_), logreg_config.b)
-    self.param_list_ = [
-      ('%s:w' % self.name_, self.w_),
-      ('%s:b' % self.name_, self.b_),
-    ]
+    self.param_list_ = [(f'{self.name_}:w', self.w_), (f'{self.name_}:b', self.b_)]
     self.dropprob_ = logreg_config.dropprob
 
   def __str__(self):

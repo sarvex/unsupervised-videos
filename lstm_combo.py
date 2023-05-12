@@ -5,14 +5,14 @@ import lstm
 class LSTMCombo(object):
   def __init__(self, model):
     self.model_ = model
-    
+
     self.lstm_stack_enc_ = lstm.LSTMStack()
     self.lstm_stack_dec_ = lstm.LSTMStack()
     self.lstm_stack_fut_ = lstm.LSTMStack()
-    
+
     self.decoder_copy_init_state_ = model.decoder_copy_init_state
     self.future_copy_init_state_  = model.future_copy_init_state
-    
+
     # add LSTM blocks for encoder, decoder and future predictor
     for l in model.lstm:
       self.lstm_stack_enc_.Add(lstm.LSTM(l))
@@ -22,26 +22,26 @@ class LSTMCombo(object):
     if model.future_seq_length > 0:
       for l in model.lstm_future:
         self.lstm_stack_fut_.Add(lstm.LSTM(l))
-    
+
     # do other initialization stuff
     assert model.dec_seq_length > 0 or model.future_seq_length > 0
     self.is_conditional_dec_ = model.dec_conditional
     self.is_conditional_fut_ = model.future_conditional
-   
+
     if self.is_conditional_dec_ and model.dec_seq_length > 0:
       assert self.lstm_stack_dec_.HasInputs()
     if self.is_conditional_fut_ and model.future_seq_length > 0:
       assert self.lstm_stack_fut_.HasInputs()
-   
+
     self.squash_relu_ = model.squash_relu
     self.binary_data_ = model.binary_data or model.squash_relu
     self.squash_relu_lambda_ = model.squash_relu_lambda
     self.relu_data_ = model.relu_data
-    
+
     # load model if available
     if len(model.timestamp) > 0:
       old_st = model.timestamp[-1]
-      ckpt = os.path.join(model.checkpoint_dir, '%s_%s.h5' % (model.name, old_st))
+      ckpt = os.path.join(model.checkpoint_dir, f'{model.name}_{old_st}.h5')
       f = h5py.File(ckpt)
       self.lstm_stack_enc_.Load(f)
       self.lstm_stack_dec_.Load(f)
@@ -213,7 +213,7 @@ class LSTMCombo(object):
     num_batches = dataset_size / batch_size
     loss_dec = 0
     loss_fut = 0
-    for ii in xrange(num_batches):
+    for _ in xrange(num_batches):
       v_cpu, _ = data.GetBatch()
       self.v_.overwrite(v_cpu)
       self.Fprop()
@@ -253,7 +253,7 @@ class LSTMCombo(object):
       self.v_fut_deriv_ = cm.empty((batch_size, future_seq_length * self.num_dims_))
 
   def Save(self, model_file):
-    sys.stdout.write(' Writing model to %s' % model_file)
+    sys.stdout.write(f' Writing model to {model_file}')
     f = h5py.File(model_file, 'w')
     self.lstm_stack_enc_.Save(f)
     self.lstm_stack_dec_.Save(f)
@@ -286,11 +286,7 @@ class LSTMCombo(object):
     fut = self.v_fut_.asarray()
 
     # save or display the reconstructed/future predicted data
-    if output_dir is None:
-      output_file = None
-    else:
-      output_file = os.path.join(output_dir)
-
+    output_file = None if output_dir is None else os.path.join(output_dir)
     data.DisplayData(v_cpu, rec=rec, fut=fut, case_id=rand_index, output_file=output_file)
 
   def RunAndShow(self, data, output_dir=None, max_dataset_size=0):

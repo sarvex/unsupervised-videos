@@ -2,7 +2,8 @@ import ctypes as ct
 import math
 import pdb
 import os
-_ConvNet = ct.cdll.LoadLibrary(os.getcwd() + '/cudamat/libcudamat_conv_gemm.so')
+_ConvNet = ct.cdll.LoadLibrary(
+    f'{os.getcwd()}/cudamat/libcudamat_conv_gemm.so')
 
 
 def DivUp(a, b):

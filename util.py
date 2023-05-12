@@ -81,9 +81,11 @@ class Param(object):
   def Save(self, f, name):
     w_dset = f.create_dataset(name, self.w_.shape, dtype=np.float32)
     w_dset[:, :] = self.w_.asarray()
-    w_dset = f.create_dataset('%s_grad' % name, self.dw_history_.shape, dtype=np.float32)
+    w_dset = f.create_dataset(f'{name}_grad',
+                              self.dw_history_.shape,
+                              dtype=np.float32)
     w_dset[:, :] = self.dw_history_.asarray()
-    f.attrs.__setitem__('%s_t' % name, self.t_)
+    f.attrs.__setitem__(f'{name}_t', self.t_)
 
   def GetW(self):
     return self.w_

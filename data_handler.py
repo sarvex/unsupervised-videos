@@ -105,15 +105,13 @@ class DataHandler(object):
   def GetLabels(self, filename):
     labels = []
     if filename != '':
-      for line in open(filename):
-        labels.append(int(line.strip()))
+      labels.extend(int(line.strip()) for line in open(filename))
     return labels
 
   def GetVideoIds(self, filename):
     video_ids = []
     if filename != '':
-      for line in open(filename):
-        video_ids.append(int(line.strip()))
+      video_ids.extend(int(line.strip()) for line in open(filename))
     return video_ids
 
   def GetBatchSize(self):
@@ -540,7 +538,6 @@ class VideoPatchDataHandler(object):
 
   def Reset(self):
     self.row_ = 0
-    pass
 
   def GetBatch(self, verbose=False):
     minibatch = self.data_[self.row_:self.row_+self.batch_size_]    
